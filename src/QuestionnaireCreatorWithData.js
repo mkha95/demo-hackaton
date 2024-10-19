@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useAnimation } from 'framer-motion';
-import { FileText, User, PhoneCall, BarChart, Plus, Save, Trash2, CheckCircle, Link, ArrowLeft, AlertCircle, MessageCircle } from 'lucide-react';
+import { FileText, User, PhoneCall, BarChart, Plus, Save, Trash2, CheckCircle, Link, ArrowLeft, AlertCircle, MessageCircle, Play } from 'lucide-react';
 import { useAudio } from './AudioContext'; // Add this import
 import JsonAnimation from './JsonAnimation';
 
@@ -21,8 +21,11 @@ const QuestionnaireCreatorWithData = ({ isPlaying, onPlay, onPause, onReset }) =
   const [audioError, setAudioError] = useState(null);
   const audioRef = useRef(null);
   const { playBackgroundMusic, pauseBackgroundMusic, playDialogue, isDialoguePlaying } = useAudio();
-  const [isBackgroundMusicPlaying, setIsBackgroundMusicPlaying] = useState(true);
+  const [isBackgroundMusicPlaying, setIsBackgroundMusicPlaying] = useState(false);
   const [showJsonAnimation, setShowJsonAnimation] = useState(false);
+  const [showPlayButton, setShowPlayButton] = useState(true);
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [hasStartedMusic, setHasStartedMusic] = useState(false);
 
   const questionTypes = [
     { type: 'text', label: 'Testo' },
@@ -69,6 +72,13 @@ const QuestionnaireCreatorWithData = ({ isPlaying, onPlay, onPause, onReset }) =
     await moveCursor(window.innerWidth / 2 - 100, window.innerHeight - 150);
     await simulateClick();
     setHotlineNumber("800-MOBILITA");
+    
+    // Start background music if it hasn't been started yet
+    if (!hasStartedMusic) {
+      playBackgroundMusic();
+      setIsBackgroundMusicPlaying(true);
+      setHasStartedMusic(true);
+    }
   };
 
   const simulateEndpointClick = async () => {
@@ -112,17 +122,6 @@ const QuestionnaireCreatorWithData = ({ isPlaying, onPlay, onPause, onReset }) =
 
     runStep();
   }, [currentStep]);
-
-  useEffect(() => {
-    // Start playing background music when the component mounts
-    playBackgroundMusic();
-    setIsBackgroundMusicPlaying(true);
-
-    // Stop the music when the component unmounts
-    return () => {
-      pauseBackgroundMusic();
-    };
-  }, []);
 
   useEffect(() => {
     if (showJsonData && isDialoguePlaying) {
@@ -337,7 +336,7 @@ const QuestionnaireCreatorWithData = ({ isPlaying, onPlay, onPause, onReset }) =
           onClick={simulateHotlineActivation}
         >
           <PhoneCall className="mr-2" size={20} />
-          Attiva Hotline
+          {hasStartedMusic ? 'Attiva Hotline' : 'Attiva Hotline e Musica'}
         </button>
       </div>
 
