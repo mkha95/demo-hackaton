@@ -1,11 +1,14 @@
 import React from 'react';
-import JsonAnimation from './JsonAnimation';
+import QuestionnaireCreatorWithData from './QuestionnaireCreatorWithData';
+import { AudioProvider } from './AudioContext';
 
 function App() {
   return (
-    <div className="App">
-      <JsonAnimation />
-    </div>
+    <AudioProvider>
+      <div className="App">
+        <QuestionnaireCreatorWithData />
+      </div>
+    </AudioProvider>
   );
 }
 

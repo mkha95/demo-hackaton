@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, MessageCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, MessageCircle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { useAudio } from './AudioContext';
 
 const conversation = [
   { speaker: 'assistant', text: "Benvenuto al servizio di segnalazione problemi stradali. Che problema desidera segnalare?", field: null, time: 0 },
@@ -12,14 +13,14 @@ const conversation = [
   { speaker: 'assistant', text: "Segnalazione inviata. Grazie per il suo contributo alla sicurezza stradale.", field: 'stato', value: 'inviata', time: 24 }
 ];
 
-const JsonAnimation = () => {
+const JsonAnimation = ({ onBack }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [json, setJson] = useState({});
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioError, setAudioError] = useState(null);
-  const audioRef = useRef(null);
   const conversationRef = useRef(null);
   const jsonRef = useRef(null);
+  const { playBackgroundMusic, pauseBackgroundMusic, playDialogue, isDialoguePlaying } = useAudio();
 
   useEffect(() => {
     if (isPlaying && currentStep < conversation.length) {
@@ -43,59 +44,32 @@ const JsonAnimation = () => {
   }, [currentStep, isPlaying]);
 
   useEffect(() => {
-    // Scorrimento automatico per la conversazione
     if (conversationRef.current) {
       conversationRef.current.scrollTop = conversationRef.current.scrollHeight;
     }
-    // Scorrimento automatico per il JSON
     if (jsonRef.current) {
       jsonRef.current.scrollTop = jsonRef.current.scrollHeight;
     }
   }, [currentStep, json]);
 
-  useEffect(() => {
-    // Precarica l'audio quando il componente viene montato
-    audioRef.current.load();
-  }, []);
-
-  const handlePlay = () => {
-    if (audioRef.current) {
-      audioRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch(error => {
-        console.error("Errore nella riproduzione:", error);
-        setAudioError(`Errore nella riproduzione: ${error.message}`);
-      });
-    }
-  };
-
-  const handlePause = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  const handleReset = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    setIsPlaying(false);
-    setCurrentStep(0);
-    setJson({});
-    setAudioError(null);
-  };
-
-  const handleAudioError = (e) => {
-    console.error("Errore audio:", e);
-    setAudioError(`Errore nel caricamento dell'audio: ${e.message}`);
+  const handlePlayDialogue = () => {
+    setIsPlaying(true);
+    pauseBackgroundMusic();
+    playDialogue();
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 p-4">
       <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl p-8">
-        <h2 className="text-3xl font-bold mb-6 text-center text-indigo-700">Segnalazione Problema Stradale</h2>
+        <div className="flex justify-between items-center mb-6">
+          <button 
+            onClick={onBack}
+            className="flex items-center text-blue-600 hover:text-blue-800"
+          >
+            <ArrowLeft className="mr-2" /> Torna ai dati JSON
+          </button>
+          <h2 className="text-3xl font-bold text-center text-indigo-700">Segnalazione Problema Stradale</h2>
+        </div>
         <div className="grid grid-cols-2 gap-8">
           <div ref={conversationRef} className="bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto">
             <h3 className="text-xl font-semibold mb-4 text-gray-700">Conversazione</h3>
@@ -136,15 +110,14 @@ const JsonAnimation = () => {
             </AnimatePresence>
           </div>
         </div>
-        <div className="flex justify-center space-x-4 mt-6">
-          <button onClick={handlePlay} className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full transition duration-300 ease-in-out flex items-center" disabled={isPlaying}>
-            <CheckCircle className="mr-2" size={18} /> Play
-          </button>
-          <button onClick={handlePause} className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-full transition duration-300 ease-in-out flex items-center" disabled={!isPlaying}>
-            <AlertCircle className="mr-2" size={18} /> Pause
-          </button>
-          <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-full transition duration-300 ease-in-out flex items-center">
-            <MessageCircle className="mr-2" size={18} /> Reset
+        <div className="flex justify-center mt-6">
+          <button 
+            onClick={handlePlayDialogue} 
+            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full transition duration-300 ease-in-out flex items-center"
+            disabled={isPlaying}
+          >
+            <MessageCircle className="mr-2" size={18} />
+            {isPlaying ? 'Riproduzione in corso...' : 'Riproduci Dialogo'}
           </button>
         </div>
       </div>
@@ -153,11 +126,6 @@ const JsonAnimation = () => {
           {audioError}
         </div>
       )}
-      <audio
-        ref={audioRef}
-        src="/dialogue.mp3"
-        onError={handleAudioError}
-      />
     </div>
   );
 };
